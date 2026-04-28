@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:proyecto_nota/modelo/nota.dart';
 import 'package:proyecto_nota/screens/detail_notes.dart';
 import 'package:proyecto_nota/screens/form_notes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ListNota extends StatefulWidget {
   const ListNota({super.key});
@@ -12,6 +15,12 @@ class ListNota extends StatefulWidget {
 
 class _ListNotaState extends State<ListNota> {
   List<Nota> notas = [];
+
+  @override
+  void initState() {
+    super.initState();
+    this.cargarNotas();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +38,7 @@ class _ListNotaState extends State<ListNota> {
           );
           if (nota != null) {
             setState(() => notas.add(nota));
+            guardarNota();
           }
         },
         child: Icon(Icons.add),
@@ -55,5 +65,22 @@ class _ListNotaState extends State<ListNota> {
         ),
       ),
     );
+  }
+
+  Future<void> cargarNotas() async {
+    final prefs = await SharedPreferences.getInstance();
+    final datos = prefs.getStringList('notas') ?? [];
+    setState(() {
+      notas = datos
+          .map((datoJson) => Nota.fromJson(jsonDecode(datoJson)))
+          .toList();
+    });
+  }
+
+  Future<void> guardarNota() async {
+    // guardamos toda la lista por que no guarda elemento a elemento
+    final prefs = await SharedPreferences.getInstance();
+    final datos = notas.map((nota) => jsonEncode(nota.toJson())).toList();
+    prefs.setStringList("notas", datos);
   }
 }
